@@ -1,0 +1,30 @@
+# Terraform state
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Локальные кэши Terraform
+**/.terraform/*
+
+# Исключение для .terraformrc
+!.terraformrc
+
+# Секретные tfvars-файлы
+personal.auto.tfvars
+secrets.auto.tfvars
+terraform.tfvars
+*.auto.tfvars
+
+# Ключи сервисных аккаунтов
+authorized_key.json
+*-key.json
+*service-account*.json
+
+# Сгенерированный инвентарь Ansible
+inventory.ini
+
+# Логи и прочее
+*.log
+.DS_Store*.tfstate.backup
+*.tfstate.backup
