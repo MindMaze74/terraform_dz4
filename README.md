@@ -29,21 +29,21 @@
 ------
 В случае использования MacOS вы получите ошибку "Incompatible provider version" . В этом случае скачайте remote модуль локально и поправьте в нем версию template провайдера на более старую.
 ------
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/1.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/1.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/2.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/2.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/3.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/3.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/4.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/4.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/5.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/5.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/6.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/6.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/7.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/7.png)
 
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/main/img/8.png)
+>![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/8.png)
 
 ### Задание 2
 
@@ -63,11 +63,11 @@ module "vpc_dev" {
   cidr = "10.0.1.0/24"
 }
 ```
->![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/main/img/9.png)
+>![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/9.png)
 
->![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/main/img/10.png)
+>![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/10.png)
 
->![задание 2-README.md-vpc](https://github.com/MindMaze74/terraform_dz4/blob/main/src_dz1/modules/vpc/README.md)
+>![задание 2-README.md-vpc](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/src_dz1/modules/vpc/README.md)
 
 ### Задание 3
 1. Выведите список ресурсов в стейте.
@@ -76,17 +76,17 @@ module "vpc_dev" {
 4. Импортируйте всё обратно. Проверьте terraform plan. Значимых(!!) изменений быть не должно.
 Приложите список выполненных команд и скриншоты процессы.
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/11.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/11.png)
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/12.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/12.png)
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/13.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/13.png)
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/14.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/14.png)
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/15.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/15.png)
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/main/img/16.png)
+>![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/16.png)
 
 ## Дополнительные задания (со звёздочкой*)
 
@@ -124,9 +124,9 @@ module "vpc_dev" {
 <details>
   <summary>Нажмите, чтобы увидеть результаты по Задаче 4*</summary>
 
->![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/17.png)
+>![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/17.png)
 
->![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/18.png)
+>![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/18.png)
 
 > Листинг terraform plan по сети
 
@@ -244,25 +244,25 @@ user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform console
 <details>
   <summary>Нажмите, чтобы увидеть результаты по Задаче 4*</summary>
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/17.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/17.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/18.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/18.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/19.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/19.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/20.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/20.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/21.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/21.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/22.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/22.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/23.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/23.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/24.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/24.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/25.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/25.png)
 
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/26.png)
+>![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/26.png)
 
 > Листинг terraform apply при ha = false и ha = true
 
@@ -656,11 +656,11 @@ user@ubuntu24:~/git/terraform_dz4/src_dz1$
 1. Используя готовый yandex cloud terraform module и пример его вызова(examples/simple-bucket): https://github.com/terraform-yc-modules/terraform-yc-s3 .
 Создайте и не удаляйте для себя s3 бакет размером 1 ГБ(это бесплатно), он пригодится вам в ДЗ к 5 лекции.
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/27.png)
+>![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/27.png)
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/28.png)
+>![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/28.png)
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/29.png)
+>![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/29.png)
 
 ### Задание 7*
 
@@ -691,22 +691,22 @@ terraform console: >nonsensitive(data.vault_generic_secret.vault_example.data.<�
 5. Попробуйте самостоятельно разобраться в документации и записать новый секрет в vault с помощью terraform. 
 
 
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/30.png)
+>![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/30.png)
 
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/31.png)
+>![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/31.png)
 
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/32.png)
+>![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/32.png)
 
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/33.png)
+>![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/33.png)
 
 ### Задание 8*
 Попробуйте самостоятельно разобраться в документаци и с помощью terraform remote state разделить root модуль на два отдельных root-модуля: создание VPC , создание ВМ . 
 
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/34.png)
+>![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/34.png)
 
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/35.png)
+>![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/35.png)
 
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/main/img/36.png)
+>![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/36.png)
 
 ### Правила приёма работы
 
