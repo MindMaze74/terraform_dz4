@@ -1,3 +1,4 @@
+
 resource "yandex_compute_instance" "test" {
   name        = "vm-from-remote-state"
   platform_id = "standard-v2"
