@@ -972,37 +972,49 @@ user@ubuntu24:~/git/terraform_dz4/validation$
 **Настоятельно рекомендуем выполнять все задания со звёздочкой.** Их выполнение поможет глубже разобраться в материале.   
 Задания со звёздочкой дополнительные, не обязательные к выполнению и никак не повлияют на получение вами зачёта по этому домашнему заданию. 
 ------
-### Задание 5*
-1. Напишите переменные с валидацией:
-- type=string, description="любая строка" — проверка, что строка не содержит символов верхнего регистра;
-- type=object — проверка, что одно из значений равно true, а второе false, т. е. не допускается false false и true true:
-```
-variable "in_the_end_there_can_be_only_one" {
-    description="Who is better Connor or Duncan?"
-    type = object({
-        Dunkan = optional(bool)
-        Connor = optional(bool)
-    })
-
-    default = {
-        Dunkan = true
-        Connor = false
-    }
-
-    validation {
-        error_message = "There can be only one MacLeod"
-        condition = <проверка>
-    }
-}
-```
-------
 ### Задание 6*
 
 1. Настройте любую известную вам CI/CD-систему. Если вы ещё не знакомы с CI/CD-системами, настоятельно рекомендуем вернуться к этому заданию после изучения Jenkins/Teamcity/Gitlab.
 2. Скачайте с её помощью ваш репозиторий с кодом и инициализируйте инфраструктуру.
 3. Уничтожьте инфраструктуру тем же способом.
+### Что сделано
 
+1. Для CI/CD выбран **GitHub Actions**, так как GitLab.com требует 
+   верификации аккаунта, недоступной для пользователей из России.
+2. Создан workflow `.github/workflows/terraform.yml`:
+   - `terraform init` → `terraform plan` → `terraform apply` (автоматически при push в `terraform-05`).
+   - `terraform destroy` — вручную через `workflow_dispatch`.
+3. Секреты добавлены в **Settings → Secrets and variables → Actions**:
+   - `YC_ACCESS_KEY`, `YC_SECRET_KEY` — статические ключи для backend S3.
+   - `YC_CLOUD_ID`, `YC_FOLDER_ID` — идентификаторы облака и каталога.
+   - `YC_SSH_PUBLIC_KEY` — публичный SSH-ключ для cloud-init.
+   - `YC_SERVICE_ACCOUNT_KEY_JSON` — base64 от JSON-ключа SA для провайдера Yandex.
+4. `providers.tf` адаптирован:
+   - backend `s3` использует `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` из env.
+   - провайдер Yandex — переменную `var.service_account_key_file` (в CI указывает на `/tmp/sa-key.json`).
+5. `main.tf` использует `var.ssh_public_key` вместо `file("~/.ssh/id_rsa.pub")`.
+6. MySQL-кластер закомментирован в `main.tf`, чтобы не тратить грант в CI/CD.
 
+### Результаты
+[ссылка на actions](https://github.com/MindMaze74/terraform_dz4/actions)
+[ссылка на actions](https://github.com/MindMaze74/terraform_dz4/actions/runs/34752921527/job/103712373720)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/14.png)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/15.png)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/16.png)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/17.png)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/18.png)
+
+![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/19.png)
+
+### Команды запуска
+
+- **Apply:** автоматически при `git push origin terraform-05`.
+- **Destroy:** Actions → Terraform CI/CD → Run workflow → ветка `terraform-05`.
 ------
 ### Задание 7*
 1. Настройте отдельный terraform root модуль, который будет создавать инфраструктуру для remote state:
