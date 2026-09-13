@@ -637,10 +637,9 @@ Check: CKV_SECRET_6: "Base64 High Entropy String"
 
                 13 |   token           = "ed**********"
 
-
-
 ```
 </details>
+
 ------
 
 ### Задание 2
@@ -685,7 +684,164 @@ Check: CKV_SECRET_6: "Base64 High Entropy String"
 Это упрощает настройку - больше не нужно создавать отдельную базу данных (YDB в режиме DynamoDB) для хранения блокировок.
 Lock-файл создается автоматически в том же S3 bucket рядом с state-файлом с именем `<key>.lock.info`.
 
+### Ответ:
+1. Создан **S3 bucket** `terraform-dz5-state-1789286165` для хранения state.
+2. Создан **service account** `terraform-dz5` с ролями `editor` и `storage.editor`.
+3. Создан **статический ключ доступа** для сервисного аккаунта.
+4. В `src_dz1/providers.tf` настроен backend `s3` с `use_lockfile = true`.
+5. Выполнена **миграция state** в S3: `terraform init -migrate-state`.
+6. Проверена **автоматическая блокировка** — при попытке `terraform apply` в другом окне
+   возникла ошибка доступа к state.
+7. State **разблокирован** командой `terraform force-unlock <LOCK_ID>`.
 
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/1.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/2.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/3.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/4.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/5.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/6.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/7.png)
+
+![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/8.png)
+
+<details>
+  <summary>Нажмите, чтобы увидеть листинг по Задаче 2</summary>
+
+``` bash
+user@ubuntu24:~/git/terraform_dz4$ yc storage bucket create --name terraform-dz5-state-$(date +%s)
+name: terraform-dz5-state-1789286165
+folder_id: b1g4blc2guo29mqbh6bp
+anonymous_access_flags: {}
+default_storage_class: STANDARD
+versioning: VERSIONING_DISABLED
+created_at: "2026-09-13T07:56:06.965892Z"
+resource_id: e3ej7cag34rp1vqu5sh4
+
+There is a new yc version '1.34.0' available. Current version: '1.14.0'.
+See release notes at https://yandex.cloud/ru/docs/cli/release-notes
+You can install it by running the following command in your shell:
+        $ yc components update
+
+user@ubuntu24:~/git/terraform_dz4$ cd ~/git/terraform_dz4/src_dz1
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform init -migrate-state
+Initializing the backend...
+
+Successfully configured the backend "s3"! Terraform will automatically
+use this backend unless the backend configuration changes.
+Initializing modules...
+Initializing provider plugins...
+- Reusing previous version of yandex-cloud/yandex from the dependency lock file
+- Using previously-installed yandex-cloud/yandex v0.226.0
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform init
+Initializing the backend...
+Initializing modules...
+Initializing provider plugins...
+- Reusing previous version of yandex-cloud/yandex from the dependency lock file
+- Using previously-installed yandex-cloud/yandex v0.226.0
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform plan
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # module.analytics_vm.yandex_compute_instance.test will be created
+  дальше код plan
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform apply -auto-approve
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # module.analytics_vm.yandex_compute_instance.test will be created
+  + resource "yandex_compute_instance" "test" {
+  дальше код apply
+Apply complete! Resources: 11 added, 0 changed, 0 destroyed.
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ yc storage s3api list-objects --bucket terraform-dz5-state-1789286165 --prefix src_dz1/
+contents:
+  - key: src_dz1/terraform.tfstate
+    last_modified: "2026-09-13T08:19:24.549Z"
+    etag: '"141428e0f420fbde01edb1afdfedc2ab"'
+    size: "23099"
+    owner:
+      id: ajevcajoi6sqvd59cbs9
+      display_name: ajevcajoi6sqvd59cbs9
+    storage_class: STANDARD
+name: terraform-dz5-state-1789286165
+prefix: src_dz1/
+max_keys: "1000"
+key_count: "1"
+request_id: 01ce62a20a651263
+
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform apply -auto-approve
+╷
+│ Error: Error acquiring the state lock
+│ 
+│ Error message: operation error S3: PutObject, https response error StatusCode: 412, RequestID: b19b9a4c3ee9b8d1, HostID: , api error PreconditionFailed: At least one of the pre-conditions you
+│ specified did not hold
+│ Lock Info:
+│   ID:        8de53fc7-d744-ed45-9eb0-85492479c86e
+│   Path:      terraform-dz5-state-1789286165/src_dz1/terraform.tfstate
+│   Operation: OperationTypeInvalid
+│   Who:       user@ubuntu24
+│   Version:   1.12.2
+│   Created:   2026-09-13 08:21:20.146352169 +0000 UTC
+│   Info:      
+│ 
+│ 
+│ Terraform acquires a state lock to protect the state from being written
+│ by multiple users at the same time. Please resolve the issue above and try
+│ again. For most commands, you can disable locking with the "-lock=false"
+│ flag, but this is not recommended.
+╵
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform force-unlock 8de53fc7-d744-ed45-9eb0-85492479c86e
+Do you really want to force-unlock?
+  Terraform will remove the lock on the remote state.
+  This will allow local Terraform commands to modify this state, even though it
+  may still be in use. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+Terraform state has been successfully unlocked!
+
+The state has been unlocked, and Terraform commands should now be able to
+obtain a new lock on the remote state.
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
+
+```
+</details>
 ------
 ### Задание 3  
 
