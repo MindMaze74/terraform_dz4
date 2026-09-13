@@ -16,21 +16,21 @@ stages:
 before_script:
   - cd src_dz1
 
-terraform:init:
+terraform_init:
   stage: init
   script:
     - terraform init
   only:
     - terraform-05
 
-terraform:plan:
+terraform_plan:
   stage: plan
   script:
     - terraform plan -lock=false
   only:
     - terraform-05
 
-terraform:apply:
+terraform_apply:
   stage: apply
   script:
     - terraform apply -auto-approve -lock=false
@@ -38,7 +38,7 @@ terraform:apply:
     - terraform-05
   when: manual
 
-terraform:destroy:
+terraform_destroy:
   stage: destroy
   script:
     - terraform destroy -auto-approve -lock=false
