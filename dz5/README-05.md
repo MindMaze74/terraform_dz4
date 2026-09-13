@@ -1,718 +1,764 @@
-# Домашнее задание к занятию «Продвинутые методы работы с Terraform» - Старцев Данила Антонович
+# Домашнее задание к занятию «Использование Terraform в команде» - Старцев Данила Антонович
 
 ### Цели задания
 
-1. Научиться использовать модули.
-2. Отработать операции state.
-3. Закрепить пройденный материал.
+1. Научиться использовать remote state с блокировками.
+2. Освоить приёмы командной работы.
 
 
 ### Чек-лист готовности к домашнему заданию
 
 1. Зарегистрирован аккаунт в Yandex Cloud. Использован промокод на грант.
 2. Установлен инструмент Yandex CLI.
-3. Исходный код для выполнения задания расположен в директории [**04/src**](https://github.com/netology-code/ter-homeworks/tree/main/04/src).
-4. Любые ВМ, использованные при выполнении задания, должны быть прерываемыми, для экономии средств.
+3. Любые ВМ, использованные при выполнении задания, должны быть прерываемыми, для экономии средств.
 
 ------
 ### Внимание!! Обязательно предоставляем на проверку получившийся код в виде ссылки на ваш github-репозиторий!
 Убедитесь что ваша версия **Terraform** ~>1.12.0
 Пишем красивый код, хардкод значения не допустимы!
+
+------
+### Задание 0
+1. Прочтите статью: https://neprivet.com/
+2. Пожалуйста, распространите данную идею в своем коллективе.
+
 ------
 
 ### Задание 1
 
-1. Возьмите из [демонстрации к лекции готовый код](https://github.com/netology-code/ter-homeworks/tree/main/04/demonstration1) для создания с помощью двух вызовов remote-модуля -> двух ВМ, относящихся к разным проектам(marketing и analytics) используйте labels для обозначения принадлежности.  В файле cloud-init.yml необходимо использовать переменную для ssh-ключа вместо хардкода. Передайте ssh-ключ в функцию template_file в блоке vars ={} .
-Воспользуйтесь [**примером**](https://oneuptime.com/blog/post/2026-03-02-how-to-use-cloud-init-with-terraform-for-ubuntu-provisioning/view). Обратите внимание, что ssh-authorized-keys принимает в себя список, а не строку.
-3. Добавьте в файл cloud-init.yml установку nginx.
-4. Предоставьте скриншот подключения к консоли и вывод команды ```sudo nginx -t```, скриншот консоли ВМ yandex cloud с их метками. Откройте terraform console и предоставьте скриншот содержимого модуля. Пример: > module.marketing_vm
+1. Возьмите код:
+- из [ДЗ к лекции 4](https://github.com/netology-code/ter-homeworks/tree/main/04/src),
+- из [демо к лекции 4](https://github.com/netology-code/ter-homeworks/tree/main/04/demonstration1).
+2. Проверьте код с помощью tflint и checkov. Вам не нужно инициализировать этот проект.
+3. Перечислите, какие **типы** ошибок обнаружены в проекте (без дублей).
+
+### Ответ:
+
+Проверены папки: `src/`, `src_dz1/`, `demonstration1/`, `demonstration3/`, `s3_test/`.
+
+### tflint — типы ошибок (без дублей)
+
+1. **`terraform_required_providers`**  не указана версия провайдера в `required_providers`.
+2. **`terraform_unused_declarations`**  переменная объявлена, но не используется.
+3. **`terraform_module_pinned_source`**  модуль подключён без версии/хеша. 
+
+### checkov — типы ошибок
+
+1. **`CKV_TF_1`**  модули подключены без хеша коммита.
+2. **`CKV_TF_2`**  модули подключены без версии/тега.
+3. **`CKV_YC_1`**  не назначена security group для MySQL-кластера.
+4. **`CKV_YC_2`**  у ВМ есть публичный IP.
+5. **`CKV_YC_4`**  включён serial-port (serial console).
+6. **`CKV_YC_11`** не назначена security group на сетевой интерфейс ВМ.
+7. **`CKV_SECRET_6`** найден токен `education` в `providers.tf`.
+
+<details>
+  <summary>Нажмите, чтобы увидеть листинг по Задаче 1</summary>
+
+``` bash
+
+user@ubuntu24:~/git/terraform_dz4$ tflint --version
+TFLint version 0.64.0
++ ruleset.terraform (0.15.0-bundled)
+user@ubuntu24:~/git/terraform_dz4$ rm tflint tflint_linux_amd64.zip
+echo "tflint" >> .gitignore
+echo "*.zip" >> .gitignore
+user@ubuntu24:~/git/terraform_dz4$ cd ~/git/terraform_dz4/
+user@ubuntu24:~/git/terraform_dz4$ cd src
+user@ubuntu24:~/git/terraform_dz4/src$ tflint --init
+All plugins are already installed
+user@ubuntu24:~/git/terraform_dz4/src$ tflint -f compact
+4 issue(s) found:
+
+providers.tf:3:14: Warning - Missing version constraint for provider "yandex" in `required_providers` (terraform_required_providers)
+variables.tf:36:1: Warning - variable "vms_ssh_root_key" is declared but not used (terraform_unused_declarations)
+variables.tf:43:1: Warning - variable "vm_web_name" is declared but not used (terraform_unused_declarations)
+variables.tf:50:1: Warning - variable "vm_db_name" is declared but not used (terraform_unused_declarations)
+user@ubuntu24:~/git/terraform_dz4/src$ cd ..
+user@ubuntu24:~/git/terraform_dz4$ cd demonstration1
+user@ubuntu24:~/git/terraform_dz4/demonstration1$ tflint --init
+All plugins are already installed
+user@ubuntu24:~/git/terraform_dz4/demonstration1$ tflint -f compact
+user@ubuntu24:~/git/terraform_dz4/demonstration1$ cd ..
+user@ubuntu24:~/git/terraform_dz4$ cd demonstration3
+user@ubuntu24:~/git/terraform_dz4/demonstration3$ tflint -f compact
+1 issue(s) found:
+
+providers.tf:3:13: Warning - Missing version constraint for provider "vault" in `required_providers` (terraform_required_providers)
+user@ubuntu24:~/git/terraform_dz4/demonstration3$ cd ..
+user@ubuntu24:~/git/terraform_dz4$ cd src_dz1/
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ tflint -f compact
+2 issue(s) found:
+
+providers.tf:3:14: Warning - Missing version constraint for provider "yandex" in `required_providers` (terraform_required_providers)
+variables.tf:19:1: Warning - variable "vpc_name" is declared but not used (terraform_unused_declarations)
+user@ubuntu24:~/git/terraform_dz4/src_dz1$ cd ..
+user@ubuntu24:~/git/terraform_dz4$ cd s3_test/
+user@ubuntu24:~/git/terraform_dz4/s3_test$ tflint -f compact
+7 issue(s) found:
+
+s3.tf:22:12: Warning - Module source "github.com/terraform-yc-modules/terraform-yc-s3" is not pinned (terraform_module_pinned_source)
+providers.tf:3:13: Warning - Missing version constraint for provider "vault" in `required_providers` (terraform_required_providers)
+s3.tf:1:1: Warning - Missing version constraint for provider "aws" in `required_providers` (terraform_required_providers)
+s3.tf:14:1: Warning - Missing version constraint for provider "random" in `required_providers` (terraform_required_providers)
+variables.tf:3:1: Warning - variable "cloud_id" is declared but not used (terraform_unused_declarations)
+variables.tf:13:1: Warning - variable "default_zone" is declared but not used (terraform_unused_declarations)
+variables.tf:19:1: Warning - variable "vpc_name" is declared but not used (terraform_unused_declarations)
+user@ubuntu24:~/git/terraform_dz4/s3_test$ 
+
+user@ubuntu24:~/git/terraform_dz4$ docker run --rm -v $(pwd):/tf bridgecrew/checkov -d /tf
+Unable to find image 'bridgecrew/checkov:latest' locally
+latest: Pulling from bridgecrew/checkov
+ac5e0885917e: Pull complete 
+3678bb828654: Pull complete 
+af26e1c278ee: Pull complete 
+207879fcdc92: Pull complete 
+171a8eaf7a10: Pull complete 
+6310eb16bf42: Pull complete 
+f9efa1b83d06: Pull complete 
+bf2b86b29845: Pull complete 
+db840d086b65: Pull complete 
+44136fa355b3: Already exists 
+e7bdba6d5688: Download complete 
+Digest: sha256:41c4701c6a56d8952e5aba7a420f871c8b70b57da94eb4f142dcdf7295bb0be3
+Status: Downloaded newer image for bridgecrew/checkov:latest
+2026-09-13 07:10:17,430 [MainThread  ] [WARNI]  Failed to get the checkov mappings and guidelines from https://api0.prismacloud.io/bridgecrew/api/v2/guidelines. Skips using BC_* IDs will not work.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 196, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    raise err
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 615, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 205, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.HTTPSConnection object at 0x770b6c21ed90>, 'Connection to api0.prismacloud.io timed out. (connect timeout=3.1)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/checkov/common/bridgecrew/platform_integration.py", line 1276, in get_public_run_config
+    request = self.http.request("GET", self.guidelines_api_url, headers=headers)  # type:ignore[no-untyped-call]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/_request_methods.py", line 136, in request
+    return self.request_encode_url(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/_request_methods.py", line 183, in request_encode_url
+    return self.urlopen(method, url, **extra_kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/poolmanager.py", line 443, in urlopen
+    response = conn.urlopen(method, u.request_uri, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 873, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 873, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 873, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api0.prismacloud.io', port=443): Max retries exceeded with url: /bridgecrew/api/v2/guidelines (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x770b6c21ed90>, 'Connection to api0.prismacloud.io timed out. (connect timeout=3.1)'))
+2026-09-13 07:10:18,400 [MainThread  ] [WARNI]  Failed to download module git::https://github.com/udjin10/yandex_compute_instance.git?ref=main (for external modules, the --download-external-modules flag is required)
+2026-09-13 07:10:18,400 [MainThread  ] [WARNI]  Unable to load module (github.com/terraform-yc-modules/terraform-yc-s3): list index out of range
+
+       _               _
+   ___| |__   ___  ___| | _______   __
+  / __| '_ \ / _ \/ __| |/ / _ \ \ / /
+ | (__| | | |  __/ (__|   < (_) \ V /
+  \___|_| |_|\___|\___|_|\_\___/ \_/
+
+By Prisma Cloud | version: 3.3.17 
+
+terraform scan results:
+
+Passed checks: 4, Failed checks: 14, Skipped checks: 0
+
+Check: CKV_AWS_41: "Ensure no hard coded AWS access key and secret key exists in provider"
+        PASSED for resource: aws.default
+        File: /s3_test/s3.tf:1-12
+Check: CKV_YC_12: "Ensure public IP is not assigned to database cluster."
+        PASSED for resource: module.mysql_cluster.yandex_mdb_mysql_cluster.test
+        File: /src_dz1/modules/mysql/main.tf:9-28
+        Calling File: /src_dz1/main.tf:82-89
+Check: CKV_YC_4: "Ensure compute instance does not have serial console enabled."
+        PASSED for resource: module.analytics_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:66-78
+Check: CKV_YC_4: "Ensure compute instance does not have serial console enabled."
+        PASSED for resource: module.marketing_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:51-63
+Check: CKV_TF_1: "Ensure Terraform module sources use a commit hash"
+        FAILED for resource: test-vm
+        File: /demonstration1/vms/main.tf:22-43
+
+                22 | module "test-vm" {
+                23 |   source         = "git::https://github.com/udjin10/yandex_compute_instance.git?ref=main"
+                24 |   env_name       = "develop" 
+                25 |   network_id     = yandex_vpc_network.develop.id
+                26 |   subnet_zones   = ["ru-central1-a","ru-central1-b"]
+                27 |   subnet_ids     = [yandex_vpc_subnet.develop_a.id,yandex_vpc_subnet.develop_b.id]
+                28 |   instance_name  = "webs"
+                29 |   instance_count = 2
+                30 |   image_family   = "ubuntu-2004-lts"
+                31 |   public_ip      = true
+                32 | 
+                33 |   labels = { 
+                34 |     owner= "i.ivanov",
+                35 |     project = "accounting"
+                36 |      }
+                37 | 
+                38 |   metadata = {
+                39 |     user-data          = data.template_file.cloudinit.rendered #Для демонстрации №3
+                40 |     serial-port-enable = 1
+                41 |   }
+                42 | 
+                43 | }
+
+Check: CKV_TF_2: "Ensure Terraform module sources use a tag with a version number"
+        FAILED for resource: test-vm
+        File: /demonstration1/vms/main.tf:22-43
+
+                22 | module "test-vm" {
+                23 |   source         = "git::https://github.com/udjin10/yandex_compute_instance.git?ref=main"
+                24 |   env_name       = "develop" 
+                25 |   network_id     = yandex_vpc_network.develop.id
+                26 |   subnet_zones   = ["ru-central1-a","ru-central1-b"]
+                27 |   subnet_ids     = [yandex_vpc_subnet.develop_a.id,yandex_vpc_subnet.develop_b.id]
+                28 |   instance_name  = "webs"
+                29 |   instance_count = 2
+                30 |   image_family   = "ubuntu-2004-lts"
+                31 |   public_ip      = true
+                32 | 
+                33 |   labels = { 
+                34 |     owner= "i.ivanov",
+                35 |     project = "accounting"
+                36 |      }
+                37 | 
+                38 |   metadata = {
+                39 |     user-data          = data.template_file.cloudinit.rendered #Для демонстрации №3
+                40 |     serial-port-enable = 1
+                41 |   }
+                42 | 
+                43 | }
+
+Check: CKV_TF_1: "Ensure Terraform module sources use a commit hash"
+        FAILED for resource: example-vm
+        File: /demonstration1/vms/main.tf:45-61
+
+                45 | module "example-vm" {
+                46 |   source         = "git::https://github.com/udjin10/yandex_compute_instance.git?ref=main"
+                47 |   env_name       = "stage"
+                48 |   network_id     = yandex_vpc_network.develop.id
+                49 |   subnet_zones   = ["ru-central1-a"]
+                50 |   subnet_ids     = [yandex_vpc_subnet.develop_a.id]
+                51 |   instance_name  = "web-stage"
+                52 |   instance_count = 1
+                53 |   image_family   = "ubuntu-2004-lts"
+                54 |   public_ip      = true
+                55 | 
+                56 |   metadata = {
+                57 |     user-data          = data.template_file.cloudinit.rendered #Для демонстрации №3
+                58 |     serial-port-enable = 1
+                59 |   }
+                60 | 
+                61 | }
+
+Check: CKV_TF_2: "Ensure Terraform module sources use a tag with a version number"
+        FAILED for resource: example-vm
+        File: /demonstration1/vms/main.tf:45-61
+
+                45 | module "example-vm" {
+                46 |   source         = "git::https://github.com/udjin10/yandex_compute_instance.git?ref=main"
+                47 |   env_name       = "stage"
+                48 |   network_id     = yandex_vpc_network.develop.id
+                49 |   subnet_zones   = ["ru-central1-a"]
+                50 |   subnet_ids     = [yandex_vpc_subnet.develop_a.id]
+                51 |   instance_name  = "web-stage"
+                52 |   instance_count = 1
+                53 |   image_family   = "ubuntu-2004-lts"
+                54 |   public_ip      = true
+                55 | 
+                56 |   metadata = {
+                57 |     user-data          = data.template_file.cloudinit.rendered #Для демонстрации №3
+                58 |     serial-port-enable = 1
+                59 |   }
+                60 | 
+                61 | }
+
+Check: CKV_YC_4: "Ensure compute instance does not have serial console enabled."
+        FAILED for resource: yandex_compute_instance.test
+        File: /remote_state/vm/main.tf:1-31
+
+                1  | resource "yandex_compute_instance" "test" {
+                2  |   name        = "vm-from-remote-state"
+                3  |   platform_id = "standard-v2"
+                4  |   zone        = "ru-central1-a"
+                5  | 
+                6  |   resources {
+                7  |     cores         = 2
+                8  |     memory        = 1
+                9  |     core_fraction = 5
+                10 |   }
+                11 | 
+                12 |   boot_disk {
+                13 |     initialize_params {
+                14 |       image_id = data.yandex_compute_image.ubuntu.image_id
+                15 |     }
+                16 |   }
+                17 | 
+                18 |   scheduling_policy {
+                19 |     preemptible = true
+                20 |   }
+                21 | 
+                22 |   network_interface {
+                23 |     subnet_id = local.subnet_id
+                24 |     nat       = true
+                25 |   }
+                26 | 
+                27 |   metadata = {
+                28 |     serial-port-enable = 1
+                29 |     ssh-keys           = "ubuntu:${local.ssh_public_key}"
+                30 |   }
+                31 | }
+
+Check: CKV_YC_11: "Ensure security group is assigned to network interface."
+        FAILED for resource: yandex_compute_instance.test
+        File: /remote_state/vm/main.tf:1-31
+
+                1  | resource "yandex_compute_instance" "test" {
+                2  |   name        = "vm-from-remote-state"
+                3  |   platform_id = "standard-v2"
+                4  |   zone        = "ru-central1-a"
+                5  | 
+                6  |   resources {
+                7  |     cores         = 2
+                8  |     memory        = 1
+                9  |     core_fraction = 5
+                10 |   }
+                11 | 
+                12 |   boot_disk {
+                13 |     initialize_params {
+                14 |       image_id = data.yandex_compute_image.ubuntu.image_id
+                15 |     }
+                16 |   }
+                17 | 
+                18 |   scheduling_policy {
+                19 |     preemptible = true
+                20 |   }
+                21 | 
+                22 |   network_interface {
+                23 |     subnet_id = local.subnet_id
+                24 |     nat       = true
+                25 |   }
+                26 | 
+                27 |   metadata = {
+                28 |     serial-port-enable = 1
+                29 |     ssh-keys           = "ubuntu:${local.ssh_public_key}"
+                30 |   }
+                31 | }
+
+Check: CKV_YC_2: "Ensure compute instance does not have public IP."
+        FAILED for resource: yandex_compute_instance.test
+        File: /remote_state/vm/main.tf:1-31
+
+                1  | resource "yandex_compute_instance" "test" {
+                2  |   name        = "vm-from-remote-state"
+                3  |   platform_id = "standard-v2"
+                4  |   zone        = "ru-central1-a"
+                5  | 
+                6  |   resources {
+                7  |     cores         = 2
+                8  |     memory        = 1
+                9  |     core_fraction = 5
+                10 |   }
+                11 | 
+                12 |   boot_disk {
+                13 |     initialize_params {
+                14 |       image_id = data.yandex_compute_image.ubuntu.image_id
+                15 |     }
+                16 |   }
+                17 | 
+                18 |   scheduling_policy {
+                19 |     preemptible = true
+                20 |   }
+                21 | 
+                22 |   network_interface {
+                23 |     subnet_id = local.subnet_id
+                24 |     nat       = true
+                25 |   }
+                26 | 
+                27 |   metadata = {
+                28 |     serial-port-enable = 1
+                29 |     ssh-keys           = "ubuntu:${local.ssh_public_key}"
+                30 |   }
+                31 | }
+
+Check: CKV_TF_1: "Ensure Terraform module sources use a commit hash"
+        FAILED for resource: s3_bucket
+        File: /s3_test/s3.tf:21-27
+
+                21 | module "s3_bucket" {
+                22 |   source = "github.com/terraform-yc-modules/terraform-yc-s3"
+                23 | 
+                24 |   bucket_name = "terraform-dz4-bucket-${random_string.bucket_suffix.result}"
+                25 |   folder_id   = var.folder_id
+                26 |   max_size    = 1
+                27 | }
+
+Check: CKV_TF_2: "Ensure Terraform module sources use a tag with a version number"
+        FAILED for resource: s3_bucket
+        File: /s3_test/s3.tf:21-27
+
+                21 | module "s3_bucket" {
+                22 |   source = "github.com/terraform-yc-modules/terraform-yc-s3"
+                23 | 
+                24 |   bucket_name = "terraform-dz4-bucket-${random_string.bucket_suffix.result}"
+                25 |   folder_id   = var.folder_id
+                26 |   max_size    = 1
+                27 | }
+
+Check: CKV_YC_1: "Ensure security group is assigned to database cluster."
+        FAILED for resource: module.mysql_cluster.yandex_mdb_mysql_cluster.test
+        File: /src_dz1/modules/mysql/main.tf:9-28
+        Calling File: /src_dz1/main.tf:82-89
+
+                9  | resource "yandex_mdb_mysql_cluster" "test" {
+                10 |   name        = var.cluster_name
+                11 |   environment = "PRESTABLE"
+                12 |   network_id  = var.network_id
+                13 |   version     = "8.0"
+                14 | 
+                15 |   resources {
+                16 |     resource_preset_id = "s2.micro"
+                17 |     disk_type_id       = "network-ssd"
+                18 |     disk_size          = 10
+                19 |   }
+                20 | 
+                21 |   dynamic "host" {
+                22 |     for_each = var.ha ? [1, 2] : [1]
+                23 |     content {
+                24 |       zone      = var.zone
+                25 |       subnet_id = var.subnet_id
+                26 |     }
+                27 |   }
+                28 | }
+
+Check: CKV_YC_11: "Ensure security group is assigned to network interface."
+        FAILED for resource: module.analytics_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:66-78
+
+                9  | resource "yandex_compute_instance" "test" {
+                10 |   name        = "${var.env_name}-vm"
+                11 |   platform_id = "standard-v2"
+                12 |   zone        = var.zone
+                13 | 
+                14 |   resources {
+                15 |     cores         = 2
+                16 |     memory        = 2
+                17 |     core_fraction = 5
+                18 |   }
+                19 | 
+                20 |   boot_disk {
+                21 |     initialize_params {
+                22 |       image_id = "fd827b91d99psvq5fjit"
+                23 |     }
+                24 |   }
+                25 | 
+                26 |   scheduling_policy {
+                27 |     preemptible = true
+                28 |   }
+                29 | 
+                30 |   network_interface {
+                31 |     subnet_id = var.subnet_id
+                32 |     nat       = true
+                33 |   }
+                34 | 
+                35 |   metadata = {
+                36 |     user-data = var.cloud_init
+                37 |   }
+                38 | 
+                39 |   labels = var.labels
+                40 | }
+
+Check: CKV_YC_2: "Ensure compute instance does not have public IP."
+        FAILED for resource: module.analytics_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:66-78
+
+                9  | resource "yandex_compute_instance" "test" {
+                10 |   name        = "${var.env_name}-vm"
+                11 |   platform_id = "standard-v2"
+                12 |   zone        = var.zone
+                13 | 
+                14 |   resources {
+                15 |     cores         = 2
+                16 |     memory        = 2
+                17 |     core_fraction = 5
+                18 |   }
+                19 | 
+                20 |   boot_disk {
+                21 |     initialize_params {
+                22 |       image_id = "fd827b91d99psvq5fjit"
+                23 |     }
+                24 |   }
+                25 | 
+                26 |   scheduling_policy {
+                27 |     preemptible = true
+                28 |   }
+                29 | 
+                30 |   network_interface {
+                31 |     subnet_id = var.subnet_id
+                32 |     nat       = true
+                33 |   }
+                34 | 
+                35 |   metadata = {
+                36 |     user-data = var.cloud_init
+                37 |   }
+                38 | 
+                39 |   labels = var.labels
+                40 | }
+
+Check: CKV_YC_11: "Ensure security group is assigned to network interface."
+        FAILED for resource: module.marketing_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:51-63
+
+                9  | resource "yandex_compute_instance" "test" {
+                10 |   name        = "${var.env_name}-vm"
+                11 |   platform_id = "standard-v2"
+                12 |   zone        = var.zone
+                13 | 
+                14 |   resources {
+                15 |     cores         = 2
+                16 |     memory        = 2
+                17 |     core_fraction = 5
+                18 |   }
+                19 | 
+                20 |   boot_disk {
+                21 |     initialize_params {
+                22 |       image_id = "fd827b91d99psvq5fjit"
+                23 |     }
+                24 |   }
+                25 | 
+                26 |   scheduling_policy {
+                27 |     preemptible = true
+                28 |   }
+                29 | 
+                30 |   network_interface {
+                31 |     subnet_id = var.subnet_id
+                32 |     nat       = true
+                33 |   }
+                34 | 
+                35 |   metadata = {
+                36 |     user-data = var.cloud_init
+                37 |   }
+                38 | 
+                39 |   labels = var.labels
+                40 | }
+
+Check: CKV_YC_2: "Ensure compute instance does not have public IP."
+        FAILED for resource: module.marketing_vm.yandex_compute_instance.test
+        File: /src_dz1/modules/vm/main.tf:9-40
+        Calling File: /src_dz1/main.tf:51-63
+
+                9  | resource "yandex_compute_instance" "test" {
+                10 |   name        = "${var.env_name}-vm"
+                11 |   platform_id = "standard-v2"
+                12 |   zone        = var.zone
+                13 | 
+                14 |   resources {
+                15 |     cores         = 2
+                16 |     memory        = 2
+                17 |     core_fraction = 5
+                18 |   }
+                19 | 
+                20 |   boot_disk {
+                21 |     initialize_params {
+                22 |       image_id = "fd827b91d99psvq5fjit"
+                23 |     }
+                24 |   }
+                25 | 
+                26 |   scheduling_policy {
+                27 |     preemptible = true
+                28 |   }
+                29 | 
+                30 |   network_interface {
+                31 |     subnet_id = var.subnet_id
+                32 |     nat       = true
+                33 |   }
+                34 | 
+                35 |   metadata = {
+                36 |     user-data = var.cloud_init
+                37 |   }
+                38 | 
+                39 |   labels = var.labels
+                40 | }
+
+secrets scan results:
+
+Passed checks: 0, Failed checks: 2, Skipped checks: 0
+
+Check: CKV_SECRET_6: "Base64 High Entropy String"
+        FAILED for resource: 24e7451df05ed5cd4cf1041be67c68f8d89d087a
+        File: /demonstration3/providers.tf:13-14
+
+                13 |   token           = "ed**********"
+
+Check: CKV_SECRET_6: "Base64 High Entropy String"
+        FAILED for resource: 24e7451df05ed5cd4cf1041be67c68f8d89d087a
+        File: /s3_test/providers.tf:13-14
+
+                13 |   token           = "ed**********"
+
+
+
+```
+</details>
 ------
-В случае использования MacOS вы получите ошибку "Incompatible provider version" . В этом случае скачайте remote модуль локально и поправьте в нем версию template провайдера на более старую.
-------
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/1.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/2.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/3.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/4.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/5.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/6.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/7.png)
-
->![задание 1](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/8.png)
 
 ### Задание 2
 
-1. Напишите локальный модуль vpc, который будет создавать 2 ресурса: **одну** сеть и **одну** подсеть в зоне, объявленной при вызове модуля, например: ```ru-central1-a```.
-2. Вы должны передать в модуль переменные с названием сети, zone и v4_cidr_blocks.
-3. Модуль должен возвращать в root module с помощью output информацию о yandex_vpc_subnet. Пришлите скриншот информации из terraform console о своем модуле. Пример: > module.vpc_dev  
-4. Замените ресурсы yandex_vpc_network и yandex_vpc_subnet созданным модулем. Не забудьте передать необходимые параметры сети из модуля vpc в модуль с виртуальной машиной.
-5. Сгенерируйте документацию к модулю с помощью terraform-docs.
- 
-Пример вызова
+1. Возьмите ваш GitHub-репозиторий с **выполненным ДЗ 4** в ветке 'terraform-04' и сделайте из него ветку 'terraform-05'.
+2. Настройте remote state с встроенными блокировками:
+   - Создайте S3 bucket в Yandex Cloud для хранения state (если еще не создан)
+   - Создайте service account с правами на чтение/запись в bucket
+   - Настройте backend в providers.tf с использованием нового механизма блокировок:
+     ```hcl
+     terraform {
+       required_version = "~>1.12.0"
+       
+       backend "s3" {
+         bucket  = "ваш-bucket-name"
+         key     = "terraform.tfstate"
+         region  = "ru-central1"
+         
+         # Встроенный механизм блокировок (Terraform >= 1.6)
+         # Не требует отдельной базы данных!
+         use_lockfile = true
+         
+         endpoints = {
+           s3 = "https://storage.yandexcloud.net"
+         }
+         
+         skip_region_validation      = true
+         skip_credentials_validation = true
+         skip_requesting_account_id  = true
+         skip_s3_checksum            = true
+       }
+     }
+     ```
+   - Выполните `terraform init -migrate-state` для миграции state в S3
+   - Предоставьте скриншоты процесса настройки и миграции
+3. Закоммитьте в ветку 'terraform-05' все изменения.
+4. Откройте в проекте terraform console, а в другом окне из этой же директории попробуйте запустить terraform apply.
+5. Пришлите ответ об ошибке доступа к state (блокировка должна сработать автоматически).
+6. Принудительно разблокируйте state командой `terraform force-unlock <LOCK_ID>`. Пришлите команду и вывод.
 
-```
-module "vpc_dev" {
-  source       = "./vpc"
-  env_name     = "develop"
-  zone = "ru-central1-a"
-  cidr = "10.0.1.0/24"
-}
-```
->![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/9.png)
+**Примечание:** В Terraform >= 1.6 появился встроенный механизм блокировок через `use_lockfile = true`. 
+Это упрощает настройку - больше не нужно создавать отдельную базу данных (YDB в режиме DynamoDB) для хранения блокировок.
+Lock-файл создается автоматически в том же S3 bucket рядом с state-файлом с именем `<key>.lock.info`.
 
->![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/10.png)
 
->![задание 2-README.md-vpc](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/src_dz1/modules/vpc/README.md)
+------
+### Задание 3  
 
-### Задание 3
-1. Выведите список ресурсов в стейте.
-2. Полностью удалите из стейта модуль vpc.
-3. Полностью удалите из стейта модуль vm.
-4. Импортируйте всё обратно. Проверьте terraform plan. Значимых(!!) изменений быть не должно.
-Приложите список выполненных команд и скриншоты процессы.
+1. Сделайте в GitHub из ветки 'terraform-05' новую ветку 'terraform-hotfix'.
+2. Проверье код с помощью tflint и checkov, исправьте все предупреждения и ошибки в 'terraform-hotfix', сделайте коммит.
+3. Откройте новый pull request 'terraform-hotfix' --> 'terraform-05'. 
+4. Вставьте в комментарий PR результат анализа tflint и checkov, план изменений инфраструктуры из вывода команды terraform plan.
+5. Пришлите ссылку на PR для ревью. Вливать код в 'terraform-05' не нужно.
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/11.png)
+------
+### Задание 4
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/12.png)
+1. Напишите переменные с валидацией и протестируйте их, заполнив default верными и неверными значениями. Предоставьте скриншоты проверок из terraform console. 
 
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/13.png)
-
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/14.png)
-
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/15.png)
-
->![задание 3](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/16.png)
+- type=string, description="ip-адрес" — проверка, что значение переменной содержит верный IP-адрес с помощью функций cidrhost() или regex(). Тесты:  "192.168.0.1" и "1920.1680.0.1";
+- type=list(string), description="список ip-адресов" — проверка, что все адреса верны. Тесты:  ["192.168.0.1", "1.1.1.1", "127.0.0.1"] и ["192.168.0.1", "1.1.1.1", "1270.0.0.1"].
 
 ## Дополнительные задания (со звёздочкой*)
 
-**Настоятельно рекомендуем выполнять все задания со звёздочкой.**   Они помогут глубже разобраться в материале.   
+**Настоятельно рекомендуем выполнять все задания со звёздочкой.** Их выполнение поможет глубже разобраться в материале.   
 Задания со звёздочкой дополнительные, не обязательные к выполнению и никак не повлияют на получение вами зачёта по этому домашнему заданию. 
-
-
-### Задание 4*
-
-1. Измените модуль vpc так, чтобы он мог создать подсети во всех зонах доступности, переданных в переменной типа list(object) при вызове модуля.  
-  
-Пример вызова
-```
-module "vpc_prod" {
-  source       = "./vpc"
-  env_name     = "production"
-  subnets = [
-    { zone = "ru-central1-a", cidr = "10.0.1.0/24" },
-    { zone = "ru-central1-b", cidr = "10.0.2.0/24" },
-    { zone = "ru-central1-c", cidr = "10.0.3.0/24" },
-  ]
-}
-
-module "vpc_dev" {
-  source       = "./vpc"
-  env_name     = "develop"
-  subnets = [
-    { zone = "ru-central1-a", cidr = "10.0.1.0/24" },
-  ]
-}
-```
-
-Предоставьте код, план выполнения, результат из консоли YC.
->Ответ:
-<details>
-  <summary>Нажмите, чтобы увидеть результаты по Задаче 4*</summary>
-
->![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/17.png)
-
->![задание 4*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/18.png)
-
-> Листинг terraform plan по сети
-
-```bash
-
-  # module.vpc_dev.yandex_vpc_network.test will be created
-  + resource "yandex_vpc_network" "test" {
-      + created_at                = (known after apply)
-      + default_security_group_id = (known after apply)
-      + folder_id                 = (known after apply)
-      + id                        = (known after apply)
-      + labels                    = (known after apply)
-      + name                      = "develop"
-      + subnet_ids                = (known after apply)
-    }
-
-  # module.vpc_dev.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "develop-subnet-ru-central1-a"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.1.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-a"
-    }
-
-  # module.vpc_prod.yandex_vpc_network.test will be created
-  + resource "yandex_vpc_network" "test" {
-      + created_at                = (known after apply)
-      + default_security_group_id = (known after apply)
-      + folder_id                 = (known after apply)
-      + id                        = (known after apply)
-      + labels                    = (known after apply)
-      + name                      = "production"
-      + subnet_ids                = (known after apply)
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-a"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.1.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-a"
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-b-10.0.2.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-b"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.2.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-b"
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-d-10.0.3.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-d"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.3.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-d"
-    }
-
-Plan: 8 to add, 0 to change, 0 to destroy.
-
-user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform console
-> module.vpc_prod
-{
-  "network_id" = "enpec2hbjsd9sljtmgsk"
-  "subnet_ids" = {
-    "ru-central1-a-10.0.1.0/24" = "e9btsfh6chp89pa9i6kr"
-    "ru-central1-b-10.0.2.0/24" = "e2l06b34625272tnfv0m"
-    "ru-central1-d-10.0.3.0/24" = "fl8vfrghmshja8bhsetp"
-  }
-  "subnet_zones" = [
-    "ru-central1-a",
-    "ru-central1-b",
-    "ru-central1-d",
-  ]
-}
-```
-</details>
-
+------
 ### Задание 5*
-
-1. Напишите модуль для создания кластера managed БД Mysql в Yandex Cloud с одним или несколькими(2 по умолчанию) хостами в зависимости от переменной HA=true или HA=false. Используйте ресурс yandex_mdb_mysql_cluster: передайте имя кластера и id сети.
-2. Напишите модуль для создания базы данных и пользователя в уже существующем кластере managed БД Mysql. Используйте ресурсы yandex_mdb_mysql_database и yandex_mdb_mysql_user: передайте имя базы данных, имя пользователя и id кластера при вызове модуля.
-3. Используя оба модуля, создайте кластер example из одного хоста, а затем добавьте в него БД test и пользователя app. Затем измените переменную и превратите сингл хост в кластер из 2-х серверов.
-4. Предоставьте план выполнения и по возможности результат. Сразу же удаляйте созданные ресурсы, так как кластер может стоить очень дорого. Используйте минимальную конфигурацию.
->Ответ:
-<details>
-  <summary>Нажмите, чтобы увидеть результаты по Задаче 4*</summary>
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/17.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/18.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/19.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/20.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/21.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/22.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/23.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/24.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/25.png)
-
->![задание 5*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/26.png)
-
-> Листинг terraform apply при ha = false и ha = true
-
-```bash
-
-
-  # module.mysql_cluster.yandex_mdb_mysql_cluster.test will be created
-  + resource "yandex_mdb_mysql_cluster" "test" {
-      + allow_regeneration_host   = false
-      + backup_retain_period_days = (known after apply)
-      + created_at                = (known after apply)
-      + deletion_protection       = (known after apply)
-      + disk_encryption_key_id    = (known after apply)
-      + environment               = "PRESTABLE"
-      + folder_id                 = (known after apply)
-      + health                    = (known after apply)
-      + host_group_ids            = (known after apply)
-      + id                        = (known after apply)
-      + mysql_config              = (known after apply)
-      + name                      = "example"
-      + network_id                = (known after apply)
-      + status                    = (known after apply)
-      + version                   = "8.0"
-
-      + access (known after apply)
-
-      + backup_window_start (known after apply)
-
-      + disk_size_autoscaling (known after apply)
-
-      + host {
-          + assign_public_ip   = false
-          + fqdn               = (known after apply)
-          + replication_source = (known after apply)
-          + subnet_id          = (known after apply)
-          + zone               = "ru-central1-a"
-        }
-
-      + maintenance_window (known after apply)
-
-      + performance_diagnostics (known after apply)
-
-      + resources {
-          + disk_size          = 10
-          + disk_type_id       = "network-ssd"
-          + resource_preset_id = "s2.micro"
-        }
-    }
-
-  # module.mysql_db.yandex_mdb_mysql_database.test will be created
-  + resource "yandex_mdb_mysql_database" "test" {
-      + cluster_id = (known after apply)
-      + id         = (known after apply)
-      + name       = "test"
-    }
-
-  # module.mysql_db.yandex_mdb_mysql_user.test will be created
-  + resource "yandex_mdb_mysql_user" "test" {
-      + authentication_plugin = (known after apply)
-      + cluster_id            = (known after apply)
-      + connection_manager    = (known after apply)
-      + generate_password     = false
-      + id                    = (known after apply)
-      + name                  = "app"
-      + password              = (sensitive value)
-      + password_wo           = (write-only attribute)
-
-      + connection_limits (known after apply)
-
-      + permission {
-          + database_name = "test"
-          + roles         = [
-              + "ALL",
-            ]
-        }
-    }
-
-  # module.vpc_dev.yandex_vpc_network.test will be created
-  + resource "yandex_vpc_network" "test" {
-      + created_at                = (known after apply)
-      + default_security_group_id = (known after apply)
-      + folder_id                 = (known after apply)
-      + id                        = (known after apply)
-      + labels                    = (known after apply)
-      + name                      = "develop"
-      + subnet_ids                = (known after apply)
-    }
-
-  # module.vpc_dev.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "develop-subnet-ru-central1-a"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.1.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-a"
-    }
-
-  # module.vpc_prod.yandex_vpc_network.test will be created
-  + resource "yandex_vpc_network" "test" {
-      + created_at                = (known after apply)
-      + default_security_group_id = (known after apply)
-      + folder_id                 = (known after apply)
-      + id                        = (known after apply)
-      + labels                    = (known after apply)
-      + name                      = "production"
-      + subnet_ids                = (known after apply)
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-a"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.1.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-a"
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-b-10.0.2.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-b"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.2.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-b"
-    }
-
-  # module.vpc_prod.yandex_vpc_subnet.test["ru-central1-d-10.0.3.0/24"] will be created
-  + resource "yandex_vpc_subnet" "test" {
-      + created_at     = (known after apply)
-      + folder_id      = (known after apply)
-      + id             = (known after apply)
-      + labels         = (known after apply)
-      + name           = "production-subnet-ru-central1-d"
-      + network_id     = (known after apply)
-      + v4_cidr_blocks = [
-          + "10.0.3.0/24",
-        ]
-      + v6_cidr_blocks = (known after apply)
-      + zone           = "ru-central1-d"
-    }
-
-Plan: 11 to add, 0 to change, 0 to destroy.
-
-Do you want to perform these actions?
-  Terraform will perform the actions described above.
-  Only 'yes' will be accepted to approve.
-
-  Enter a value: yes
-
-module.vpc_prod.yandex_vpc_network.test: Creating...
-module.vpc_dev.yandex_vpc_network.test: Creating...
-module.vpc_prod.yandex_vpc_network.test: Creation complete after 3s [id=enp5p5per3arhigqbqgd]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-b-10.0.2.0/24"]: Creating...
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-d-10.0.3.0/24"]: Creating...
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Creating...
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-b-10.0.2.0/24"]: Creation complete after 0s [id=e2lg9fopii1i11u62od0]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-d-10.0.3.0/24"]: Creation complete after 0s [id=fl8ldaskea911h4tqaa0]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Creation complete after 1s [id=e9bqqgi98899t921skf0]
-module.vpc_dev.yandex_vpc_network.test: Creation complete after 4s [id=enp244s0mjo1243hnqus]
-module.vpc_dev.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Creating...
-module.vpc_dev.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Creation complete after 1s [id=e9b3hjk148um4khlm2sv]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Creating...
-module.marketing_vm.yandex_compute_instance.test: Creating...
-module.analytics_vm.yandex_compute_instance.test: Creating...
-module.analytics_vm.yandex_compute_instance.test: Still creating... [00m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [00m10s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [00m10s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Still creating... [00m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [00m20s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [00m20s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [00m30s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Still creating... [00m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [00m30s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [00m40s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Still creating... [00m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [00m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [00m50s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Still creating... [00m50s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [00m50s elapsed]
-module.marketing_vm.yandex_compute_instance.test: Still creating... [01m00s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Still creating... [01m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m00s elapsed]
-module.analytics_vm.yandex_compute_instance.test: Creation complete after 1m3s [id=fhmc9llg8vv3m9bcf9h6]
-module.marketing_vm.yandex_compute_instance.test: Creation complete after 1m6s [id=fhmckh2i8vo1so154f3l]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [01m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [02m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [03m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [04m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [05m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [06m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [07m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [08m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [08m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [08m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still creating... [08m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Creation complete after 8m33s [id=c9q4aq712lge2ja7ki2b]
-module.mysql_db.yandex_mdb_mysql_database.test: Creating...
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [00m10s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [00m20s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [00m30s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [00m40s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [00m50s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m00s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m10s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m20s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m30s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m40s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [01m50s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [02m00s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [02m10s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Still creating... [02m20s elapsed]
-module.mysql_db.yandex_mdb_mysql_database.test: Creation complete after 2m24s [id=c9q4aq712lge2ja7ki2b:test]
-module.mysql_db.yandex_mdb_mysql_user.test: Creating...
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [00m10s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [00m20s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [00m30s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [00m40s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [00m50s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [01m00s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Still creating... [01m10s elapsed]
-module.mysql_db.yandex_mdb_mysql_user.test: Creation complete after 1m13s [id=c9q4aq712lge2ja7ki2b:app]
-
-Apply complete! Resources: 11 added, 0 changed, 0 destroyed.
-user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
-
-#=========================================================ha= true====================================================================
-
-user@ubuntu24:~/git/terraform_dz4/src_dz1$ terraform apply
-module.vpc_prod.yandex_vpc_network.test: Refreshing state... [id=enp5p5per3arhigqbqgd]
-module.vpc_dev.yandex_vpc_network.test: Refreshing state... [id=enp244s0mjo1243hnqus]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-b-10.0.2.0/24"]: Refreshing state... [id=e2lg9fopii1i11u62od0]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-d-10.0.3.0/24"]: Refreshing state... [id=fl8ldaskea911h4tqaa0]
-module.vpc_prod.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Refreshing state... [id=e9bqqgi98899t921skf0]
-module.vpc_dev.yandex_vpc_subnet.test["ru-central1-a-10.0.1.0/24"]: Refreshing state... [id=e9b3hjk148um4khlm2sv]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Refreshing state... [id=c9q4aq712lge2ja7ki2b]
-module.marketing_vm.yandex_compute_instance.test: Refreshing state... [id=fhmckh2i8vo1so154f3l]
-module.analytics_vm.yandex_compute_instance.test: Refreshing state... [id=fhmc9llg8vv3m9bcf9h6]
-module.mysql_db.yandex_mdb_mysql_database.test: Refreshing state... [id=c9q4aq712lge2ja7ki2b:test]
-module.mysql_db.yandex_mdb_mysql_user.test: Refreshing state... [id=c9q4aq712lge2ja7ki2b:app]
-
-Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
-  ~ update in-place
-
-Terraform will perform the following actions:
-
-  # module.mysql_cluster.yandex_mdb_mysql_cluster.test will be updated in-place
-  ~ resource "yandex_mdb_mysql_cluster" "test" {
-        id                        = "c9q4aq712lge2ja7ki2b"
-        name                      = "example"
-        # (15 unchanged attributes hidden)
-
-      + host {
-          + assign_public_ip = false
-          + subnet_id        = "e9b3hjk148um4khlm2sv"
-          + zone             = "ru-central1-a"
-        }
-
-        # (7 unchanged blocks hidden)
-    }
-
-Plan: 0 to add, 1 to change, 0 to destroy.
-
-Do you want to perform these actions?
-  Terraform will perform the actions described above.
-  Only 'yes' will be accepted to approve.
-
-  Enter a value: yes
-
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Modifying... [id=c9q4aq712lge2ja7ki2b]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 00m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 00m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 00m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 00m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 00m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 01m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 02m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 03m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 04m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 05m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 06m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 07m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 08m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m00s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m10s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m20s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m30s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m40s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Still modifying... [id=c9q4aq712lge2ja7ki2b, 09m50s elapsed]
-module.mysql_cluster.yandex_mdb_mysql_cluster.test: Modifications complete after 9m51s [id=c9q4aq712lge2ja7ki2b]
-
-Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
-user@ubuntu24:~/git/terraform_dz4/src_dz1$ 
-
+1. Напишите переменные с валидацией:
+- type=string, description="любая строка" — проверка, что строка не содержит символов верхнего регистра;
+- type=object — проверка, что одно из значений равно true, а второе false, т. е. не допускается false false и true true:
 ```
-</details>
+variable "in_the_end_there_can_be_only_one" {
+    description="Who is better Connor or Duncan?"
+    type = object({
+        Dunkan = optional(bool)
+        Connor = optional(bool)
+    })
 
+    default = {
+        Dunkan = true
+        Connor = false
+    }
 
+    validation {
+        error_message = "There can be only one MacLeod"
+        condition = <проверка>
+    }
+}
+```
+------
 ### Задание 6*
-1. Используя готовый yandex cloud terraform module и пример его вызова(examples/simple-bucket): https://github.com/terraform-yc-modules/terraform-yc-s3 .
-Создайте и не удаляйте для себя s3 бакет размером 1 ГБ(это бесплатно), он пригодится вам в ДЗ к 5 лекции.
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/27.png)
+1. Настройте любую известную вам CI/CD-систему. Если вы ещё не знакомы с CI/CD-системами, настоятельно рекомендуем вернуться к этому заданию после изучения Jenkins/Teamcity/Gitlab.
+2. Скачайте с её помощью ваш репозиторий с кодом и инициализируйте инфраструктуру.
+3. Уничтожьте инфраструктуру тем же способом.
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/28.png)
 
->![задание 6*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/29.png)
-
+------
 ### Задание 7*
+1. Настройте отдельный terraform root модуль, который будет создавать инфраструктуру для remote state:
+   - S3 bucket для tfstate с версионированием
+   - Сервисный аккаунт с необходимыми правами (storage.editor)
+   - Static access key для сервисного аккаунта
+2. Output должен содержать:
+   - Имя bucket
+   - Access key ID и Secret key (sensitive)
+   - Пример конфигурации backend для использования
+3. После создания инфраструктуры используйте outputs для настройки backend в основном проекте.
 
-1. Разверните у себя локально vault, используя docker-compose.yml в проекте.
-2. Для входа в web-интерфейс и авторизации terraform в vault используйте токен "education".
-3. Создайте новый секрет по пути http://127.0.0.1:8200/ui/vault/secrets/secret/create
-Path: example  
-secret data key: test 
-secret data value: congrats!  
-4. Считайте этот секрет с помощью terraform и выведите его в output по примеру:
-```
-provider "vault" {
- address = "http://<IP_ADDRESS>:<PORT_NUMBER>"
- skip_tls_verify = true
- token = "education"
-}
-data "vault_generic_secret" "vault_example"{
- path = "secret/example"
-}
-
-output "vault_example" {
- value = "${nonsensitive(data.vault_generic_secret.vault_example.data)}"
-} 
-
-Можно обратиться не к словарю, а конкретному ключу:
-terraform console: >nonsensitive(data.vault_generic_secret.vault_example.data.<имя ключа в секрете>)
-```
-5. Попробуйте самостоятельно разобраться в документации и записать новый секрет в vault с помощью terraform. 
-
-
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/30.png)
-
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/31.png)
-
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/32.png)
-
->![задание 7*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/33.png)
-
-### Задание 8*
-Попробуйте самостоятельно разобраться в документаци и с помощью terraform remote state разделить root модуль на два отдельных root-модуля: создание VPC , создание ВМ . 
-
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/34.png)
-
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/35.png)
-
->![задание 8*](https://github.com/MindMaze74/terraform_dz4/blob/terraform-04/img/36.png)
+**Примечание:** Так как используется `use_lockfile = true`, создавать YDB/DynamoDB больше не требуется.
+Блокировки реализованы встроенным механизмом Terraform и хранятся в том же S3 bucket. 
 
 ### Правила приёма работы
 
-В своём git-репозитории создайте новую ветку terraform-04, закоммитьте в эту ветку свой финальный код проекта. Ответы на задания и необходимые скриншоты оформите в md-файле в ветке terraform-04.
+Ответы на задания и необходимые скриншоты оформите в md-файле в ветке terraform-05.
 
-В качестве результата прикрепите ссылку на ветку terraform-04 в вашем репозитории.
+В качестве результата прикрепите ссылку на ветку terraform-05 в вашем репозитории.
 
 **Важно.** Удалите все созданные ресурсы.
 
