@@ -693,7 +693,25 @@ Lock-файл создается автоматически в том же S3 bu
 6. Проверена **автоматическая блокировка** — при попытке `terraform apply` в другом окне
    возникла ошибка доступа к state.
 7. State **разблокирован** командой `terraform force-unlock <LOCK_ID>`.
+#### Команды
+```bash
 
+# 1. Создание S3 bucket
+yc storage bucket create --name terraform-dz5-state-$(date +%s)
+# 2. Миграция state
+# 3. Применение (создаст state в S3)
+terraform apply -auto-approve
+
+# 4. Проверка, что state в S3
+yc storage s3api list-objects --bucket terraform-dz5-state-1789286165 --prefix src_dz1/
+
+# 5. Проверка блокировки (в другом окне с открытым terraform console)
+terraform apply -auto-approve
+
+# 6. Разблокировка
+terraform force-unlock 8de53fc7-d744-ed45-9eb0-85492479c86e
+
+```
 
 ![задание 2](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/1.png)
 
@@ -842,6 +860,7 @@ user@ubuntu24:~/git/terraform_dz4/src_dz1$
 
 ```
 </details>
+
 ------
 ### Задание 3  
 
