@@ -20,10 +20,11 @@ jobs:
       with:
         terraform_version: 1.12.2
 
-    - name: Write SA key to file
+    - name: Write SA key to file (from base64)
       run: |
-        echo '${{ secrets.YC_SERVICE_ACCOUNT_KEY_JSON }}' > /tmp/sa-key.json
+        echo "${{ secrets.YC_SERVICE_ACCOUNT_KEY_JSON }}" | base64 -d > /tmp/sa-key.json
         chmod 600 /tmp/sa-key.json
+        head -c 50 /tmp/sa-key.json  # для отладки — увидим начало JSON
 
     - name: Terraform Init
       run: terraform init
