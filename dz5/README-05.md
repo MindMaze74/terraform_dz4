@@ -698,7 +698,12 @@ Lock-файл создается автоматически в том же S3 bu
 
 # 1. Создание S3 bucket
 yc storage bucket create --name terraform-dz5-state-$(date +%s)
+
 # 2. Миграция state
+cd ~/git/terraform_dz4/src_dz1
+terraform init -migrate-state
+terraform init
+
 # 3. Применение (создаст state в S3)
 terraform apply -auto-approve
 
