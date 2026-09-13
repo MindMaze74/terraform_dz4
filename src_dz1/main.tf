@@ -44,7 +44,7 @@ module "vpc_prod" {
 
 # SSH-ключ
 locals {
-  ssh_public_key = file("~/.ssh/id_rsa.pub")
+  ssh_public_key = var.ssh_public_key != "" ? var.ssh_public_key : file("~/.ssh/id_rsa.pub")
 }
 
 # ВМ marketing
@@ -78,22 +78,20 @@ module "analytics_vm" {
 }
 
 # ================dz5*========================
-#Создание кластера MySQL
-module "mysql_cluster" {
-  source       = "./modules/mysql"
-  cluster_name = "example"
-  network_id   = module.vpc_dev.network_id
-  subnet_id    = values(module.vpc_dev.subnet_ids)[0]
-  zone         = "ru-central1-a"
-  ha           = true
-}
-
-# Создание БД и пользователя
-module "mysql_db" {
-  source        = "./modules/mysql_db"
-  cluster_id    = module.mysql_cluster.cluster_id
-  db_name       = "test"
-  user_name     = "app"
-  user_password = "SecurePassword123!" # В реальности используйте random_password
-}
+# module "mysql_cluster" {
+#   source       = "./modules/mysql"
+#   cluster_name = "example"
+#   network_id   = module.vpc_dev.network_id
+#   subnet_id    = values(module.vpc_dev.subnet_ids)[0]
+#   zone         = "ru-central1-a"
+#   ha           = true
+# }
+#
+# module "mysql_db" {
+#   source        = "./modules/mysql_db"
+#   cluster_id    = module.mysql_cluster.cluster_id
+#   db_name       = "test"
+#   user_name     = "app"
+#   user_password = "SecurePassword123!"
+# }
 # ================dz5*========================

@@ -27,3 +27,9 @@ variable "service_account_key_file" {
   description = ""
   default     = ""
 }
+
+variable "ssh_public_key" {
+  type        = string
+  description = "Публичный SSH-ключ для ВМ. Пусто при локальной работе"
+  default     = ""
+}

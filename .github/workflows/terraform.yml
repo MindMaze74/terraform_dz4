@@ -4,16 +4,12 @@ on:
   push:
     branches:
       - terraform-05
-  workflow_dispatch:   # ручной запуск для destroy
+  workflow_dispatch:
 
 jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    env:
-      # Пробрасываем секреты в переменные окружения для backend'а S3
-      AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
 
     steps:
     - name: Checkout
@@ -27,28 +23,40 @@ jobs:
     - name: Terraform Init
       run: terraform init
       working-directory: ./src_dz1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
 
     - name: Terraform Plan
       run: terraform plan -lock=false
       working-directory: ./src_dz1
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
         TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
         TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
         TF_VAR_service_account_key_file: ""
+        TF_VAR_ssh_public_key: ${{ secrets.YC_SSH_PUBLIC_KEY }}
 
     - name: Terraform Apply
       run: terraform apply -auto-approve -lock=false
       working-directory: ./src_dz1
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
         TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
         TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
         TF_VAR_service_account_key_file: ""
+        TF_VAR_ssh_public_key: ${{ secrets.YC_SSH_PUBLIC_KEY }}
 
     - name: Terraform Destroy (manual)
       if: github.event_name == 'workflow_dispatch'
       run: terraform destroy -auto-approve -lock=false
       working-directory: ./src_dz1
       env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
         TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
         TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
         TF_VAR_service_account_key_file: ""
+        TF_VAR_ssh_public_key: ${{ secrets.YC_SSH_PUBLIC_KEY }}
