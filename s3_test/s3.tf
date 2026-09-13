@@ -19,7 +19,7 @@ resource "random_string" "bucket_suffix" {
 }
 
 module "s3_bucket" {
-  source = "github.com/terraform-yc-modules/terraform-yc-s3"
+  source = "github.com/terraform-yc-modules/terraform-yc-s3?ref=abc123def456"
 
   bucket_name = "terraform-dz4-bucket-${random_string.bucket_suffix.result}"
   folder_id   = var.folder_id

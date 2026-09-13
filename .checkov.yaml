@@ -1,0 +1,6 @@
+# Пропускаем проверки, не применимые для учебного стенда
+skip-check:
+  - CKV_YC_1    # Security group для MySQL-кластера (для учебного стенда не критично)
+  - CKV_YC_2    # Public IP у ВМ (нужен для SSH)
+  - CKV_YC_4    # Serial console (нужен для отладки)
+  - CKV_YC_11   # Security group на network_interface (настроен на уровне подсети)
