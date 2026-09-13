@@ -21,3 +21,9 @@ variable "vpc_name" {
   default     = "develop"
   description = "VPC network & subnet name"
 }
+
+variable "service_account_key_file" {
+  type        = string
+  description = ""
+  default     = ""
+}

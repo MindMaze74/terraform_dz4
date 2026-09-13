@@ -30,3 +30,4 @@ inventory.ini
 *.tfstate.backup
 tflint
 *.zip
+personal.auto.tfvars

@@ -1,0 +1,47 @@
+image: hashicorp/terraform:1.12.2
+
+variables:
+  TF_VAR_cloud_id: $YC_CLOUD_ID
+  TF_VAR_folder_id: $YC_FOLDER_ID
+  TF_VAR_service_account_key_file: ""
+  AWS_ACCESS_KEY_ID: $YC_ACCESS_KEY
+  AWS_SECRET_ACCESS_KEY: $YC_SECRET_KEY
+
+stages:
+  - init
+  - plan
+  - apply
+  - destroy
+
+before_script:
+  - cd src_dz1
+
+terraform:init:
+  stage: init
+  script:
+    - terraform init
+  only:
+    - terraform-05
+
+terraform:plan:
+  stage: plan
+  script:
+    - terraform plan -lock=false
+  only:
+    - terraform-05
+
+terraform:apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve -lock=false
+  only:
+    - terraform-05
+  when: manual
+
+terraform:destroy:
+  stage: destroy
+  script:
+    - terraform destroy -auto-approve -lock=false
+  only:
+    - terraform-05
+  when: manual
