@@ -875,6 +875,26 @@ user@ubuntu24:~/git/terraform_dz4/src_dz1$
 4. Вставьте в комментарий PR результат анализа tflint и checkov, план изменений инфраструктуры из вывода команды terraform plan.
 5. Пришлите ссылку на PR для ревью. Вливать код в 'terraform-05' не нужно.
 
+### Что сделано
+
+1. Создана ветка `terraform-hotfix` из `terraform-05`.
+2. Исправлены ошибки tflint и checkov.
+3. Создан Pull Request `terraform-hotfix → terraform-05`.
+
+### Результаты
+
+**tflint:** No issues found во всех папках
+**checkov:** Passed: 5, Failed: 0, Skipped: 1
+
+### Ссылка на PR
+
+https://github.com/MindMaze74/terraform_dz4/pull/1
+
+### Скриншот
+![задание 3- PR](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/11.png)
+
+
+
 ------
 ### Задание 4
 
@@ -882,6 +902,70 @@ user@ubuntu24:~/git/terraform_dz4/src_dz1$
 
 - type=string, description="ip-адрес" — проверка, что значение переменной содержит верный IP-адрес с помощью функций cidrhost() или regex(). Тесты:  "192.168.0.1" и "1920.1680.0.1";
 - type=list(string), description="список ip-адресов" — проверка, что все адреса верны. Тесты:  ["192.168.0.1", "1.1.1.1", "127.0.0.1"] и ["192.168.0.1", "1.1.1.1", "1270.0.0.1"].
+
+### Что сделано
+
+Создана папка `validation/` с переменными:
+- `ip` (string) — валидация через `can(cidrhost("${var.ip}/32", 0))`
+- `ip_list` (list(string)) — валидация через `alltrue([for ip in var.ip_list : can(cidrhost("${ip}/32", 0))])`
+
+
+![задание 4](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/12.png)
+
+![задание 4](https://github.com/MindMaze74/terraform_dz4/blob/terraform-05/img/dz5/13.png)
+
+```bash
+user@ubuntu24:~/git/terraform_dz4$ mkdir -p validation
+user@ubuntu24:~/git/terraform_dz4$ cd validation
+user@ubuntu24:~/git/terraform_dz4/validation$ terraform init
+Initializing the backend...
+Initializing provider plugins...
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+user@ubuntu24:~/git/terraform_dz4/validation$ terraform console
+> var.ip
+"192.168.0.1"
+> var.ip_list
+tolist([
+  "192.168.0.1",
+  "1.1.1.1",
+  "127.0.0.1",
+])
+> exit
+user@ubuntu24:~/git/terraform_dz4/validation$ console
+Command 'console' not found, but can be installed with:
+sudo apt install conserver-client
+user@ubuntu24:~/git/terraform_dz4/validation$ terraform console
+╷
+│ Error: Invalid value for variable
+│ 
+│   on terraform.tfvars line 1:
+│    1: ip      = "1920.1680.0.1"
+│     ├────────────────
+│     │ var.ip is "1920.1680.0.1"
+│ 
+│ Значение должно быть корректным IP-адресом (например, 192.168.0.1).
+│ 
+│ This was checked by the validation rule at variables.tf:5,3-13.
+╵
+
+╷
+│ Warning: Due to the problems above, some expressions may produce unexpected results.
+│ 
+│ 
+╵
+
+> exit
+user@ubuntu24:~/git/terraform_dz4/validation$ 
+```
 
 ## Дополнительные задания (со звёздочкой*)
 
